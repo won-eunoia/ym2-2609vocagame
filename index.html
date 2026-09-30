@@ -712,7 +712,9 @@ try {
 function speak(text, lang) {
   try {
     const doSpeak = () => {
-      const u = new SpeechSynthesisUtterance(text);
+      // Leading punctuation gives the audio device a short silent lead-in, so the
+      // engine/Bluetooth wake-up doesn't swallow the first syllable.
+      const u = new SpeechSynthesisUtterance(', , ' + text);
       u.lang = lang;
       u.rate = lang === 'ko-KR' ? 0.8 : 0.9;
       window.speechSynthesis.speak(u);
