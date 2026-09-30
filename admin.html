@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VOCA-PIONEER 관리자 페이지</title>
+<style>
+:root {
+  --purple: #7B5EA7;
+  --dark-purple: #4A3568;
+  --gold: #C9A84C;
+  --light-purple: #F3EFFE;
+  --bg: #FBFAF8;
+  --card-bg: #FFFFFF;
+  --text: #2B2532;
+  --text-soft: #6B6178;
+  --border: #E4DEF0;
+  --good: #3F9A5C;
+  --bad: #C6553E;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1C1720; --card-bg: #2A2233; --text: #F1ECF7;
+    --text-soft: #B8ACC9; --border: #423755; --light-purple: #352A44;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1C1720; --card-bg: #2A2233; --text: #F1ECF7;
+  --text-soft: #B8ACC9; --border: #423755; --light-purple: #352A44;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+header {
+  padding: 20px 16px 14px; text-align: center;
+  border-bottom: 1px solid var(--border); background: var(--card-bg);
+}
+header h1 { margin: 0 0 4px; font-size: 20px; color: var(--dark-purple); font-weight: 800; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) header h1 { color: #D8C6F2; } }
+:root[data-theme="dark"] header h1 { color: #D8C6F2; }
+header p { margin: 0; font-size: 13px; color: var(--text-soft); }
+
+main { max-width: 900px; margin: 0 auto; padding: 16px; }
+.hidden { display: none !important; }
+.toolbar {
+  display: flex; gap: 8px; align-items: center; justify-content: space-between;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.toolbar input {
+  flex: 1; min-width: 160px; padding: 8px 12px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--card-bg); color: var(--text); font-size: 14px;
+}
+.refresh-btn, .setup-btn {
+  padding: 8px 16px; border-radius: 8px; border: none;
+  background: var(--purple); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.status-line { font-size: 12px; color: var(--text-soft); margin-bottom: 12px; text-align: center; }
+
+.setup-box {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; margin-bottom: 16px; text-align: center;
+}
+.setup-box input { width: 100%; max-width: 480px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--border); margin: 10px 0; font-size: 13px; }
+
+section { margin-bottom: 28px; }
+section h2 {
+  font-size: 16px; color: var(--dark-purple); margin: 0 0 10px;
+  border-left: 4px solid var(--gold); padding-left: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) section h2 { color: #D8C6F2; } }
+:root[data-theme="dark"] section h2 { color: #D8C6F2; }
+
+.rank-list { display: flex; flex-direction: column; gap: 8px; }
+.rank-item {
+  display: flex; align-items: center; gap: 12px; background: var(--card-bg);
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+}
+.rank-medal { font-size: 14px; width: 32px; text-align: center; font-weight: 800; color: var(--gold); }
+.rank-name { font-weight: 700; flex: 1; }
+.rank-detail { font-size: 12px; color: var(--text-soft); }
+.rank-bar-track { width: 100px; height: 6px; border-radius: 999px; background: var(--light-purple); overflow: hidden; }
+.rank-bar-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--gold)); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; background: var(--card-bg);
+  border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+th, td { padding: 8px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+th { background: var(--purple); color: #fff; font-size: 12px; }
+tr:last-child td { border-bottom: none; }
+.status-done { color: var(--good); font-weight: 700; }
+.status-progress { color: var(--text-soft); }
+
+.student-card {
+  background: var(--card-bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-bottom: 10px;
+}
+.student-card-head {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+  cursor: pointer;
+}
+.student-card-head .sname { font-weight: 800; }
+.student-card-head .sprogress { font-size: 12px; color: var(--text-soft); }
+.wrong-tags { display: none; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.wrong-tags.open { display: flex; }
+.wrong-tag {
+  font-size: 12px; padding: 4px 8px; border-radius: 999px;
+  background: rgba(198,85,62,0.12); color: var(--bad); border: 1px solid rgba(198,85,62,0.3);
+}
+.copy-btn {
+  margin-top: 8px; font-size: 11px; padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--purple); background: none; color: var(--purple); cursor: pointer;
+}
+.empty-note { text-align: center; color: var(--text-soft); font-size: 13px; padding: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>VOCA-PIONEER 관리자 페이지</h1>
+  <p>유노이아 영어국어학원 · 학생별 진행 상황 확인</p>
+</header>
+
+<main>
+  <div class="setup-box hidden" id="setupBox">
+    <p>Apps Script 웹 앱 URL을 한 번 입력해두면, 다음부터는 이 기기에서 자동으로 불러옵니다.</p>
+    <input type="text" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    <br>
+    <button class="setup-btn" id="urlSaveBtn">저장하고 불러오기</button>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="searchInput" placeholder="학생 이름 검색...">
+    <button class="refresh-btn" id="refreshBtn">새로고침</button>
+  </div>
+  <div class="status-line" id="statusLine"></div>
+
+  <section>
+    <h2>이번 주 열심히 한 사람들</h2>
+    <div class="rank-list" id="rankList"></div>
+  </section>
+
+  <section>
+    <h2>전체 학생 현황</h2>
+    <table id="rosterTable">
+      <thead>
+        <tr><th>이름</th><th>상태</th><th>진행</th><th>전체 어휘</th><th>마지막 업데이트</th></tr>
+      </thead>
+      <tbody id="rosterBody"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>학생별 자주 틀리는 단어</h2>
+    <div id="wrongWordsArea"></div>
+  </section>
+</main>
+
+<script>
+var URL_KEY = 'voca_admin_script_url';
+var ALL_STUDENTS = [];
+
+function getScriptUrl() {
+  try { return localStorage.getItem(URL_KEY) || ''; } catch (e) { return ''; }
+}
+function setScriptUrl(u) {
+  try { localStorage.setItem(URL_KEY, u); } catch (e) {}
+}
+
+var setupBox = document.getElementById('setupBox');
+var urlInput = document.getElementById('urlInput');
+var urlSaveBtn = document.getElementById('urlSaveBtn');
+var statusLine = document.getElementById('statusLine');
+var refreshBtn = document.getElementById('refreshBtn');
+var searchInput = document.getElementById('searchInput');
+
+urlSaveBtn.addEventListener('click', function () {
+  var u = urlInput.value.trim();
+  if (!u) return;
+  setScriptUrl(u);
+  loadData();
+});
+refreshBtn.addEventListener('click', loadData);
+searchInput.addEventListener('input', renderAll);
+
+function dateKeyDaysAgo(n) {
+  var d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+function weeklyStats(dailyLog) {
+  var attempts = 0, correct = 0, newMastered = 0, activeDays = 0;
+  for (var i = 0; i < 7; i++) {
+    var key = dateKeyDaysAgo(i);
+    var day = dailyLog[key];
+    if (day) {
+      attempts += day.attempts || 0;
+      correct += day.correct || 0;
+      newMastered += day.newMastered || 0;
+      if ((day.attempts || 0) > 0) activeDays++;
+    }
+  }
+  return { attempts: attempts, correct: correct, newMastered: newMastered, activeDays: activeDays };
+}
+
+function loadData() {
+  var url = getScriptUrl();
+  if (!url || url.indexOf('http') !== 0) {
+    setupBox.classList.remove('hidden');
+    statusLine.textContent = '먼저 Apps Script 웹 앱 URL을 입력해주세요.';
+    return;
+  }
+  setupBox.classList.add('hidden');
+  statusLine.textContent = '불러오는 중...';
+  fetch(url + '?action=admin')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      ALL_STUDENTS = data.students || [];
+      statusLine.textContent = ALL_STUDENTS.length + '명 · 방금 갱신됨 (' + new Date().toLocaleTimeString('ko-KR') + ')';
+      renderAll();
+    })
+    .catch(function () {
+      statusLine.textContent = '불러오기 실패. URL이 맞는지, 인터넷 연결을 확인해주세요.';
+    });
+}
+
+function renderAll() {
+  var q = searchInput.value.trim().toLowerCase();
+  var filtered = ALL_STUDENTS.filter(function (s) {
+    return !q || s.name.toLowerCase().indexOf(q) !== -1;
+  });
+  renderRanking(filtered);
+  renderRoster(filtered);
+  renderWrongWords(filtered);
+}
+
+function renderRanking(students) {
+  var withStats = students.map(function (s) {
+    return { s: s, w: weeklyStats(s.dailyLog || {}) };
+  });
+  withStats.sort(function (a, b) { return b.w.correct - a.w.correct; });
+  var top = withStats.filter(function (x) { return x.w.attempts > 0; }).slice(0, 10);
+  var rankList = document.getElementById('rankList');
+  if (top.length === 0) {
+    rankList.innerHTML = '<div class="empty-note">이번 주 학습 기록이 아직 없어요.</div>';
+    return;
+  }
+  var medals = ['1위', '2위', '3위'];
+  var maxCorrect = Math.max.apply(null, top.map(function (x) { return x.w.correct; }).concat([1]));
+  var html = '';
+  for (var i = 0; i < top.length; i++) {
+    var x = top[i];
+    var pct = Math.round(x.w.correct / maxCorrect * 100);
+    html += '<div class="rank-item">' +
+      '<div class="rank-medal">' + (medals[i] || (i + 1) + '.') + '</div>' +
+      '<div class="rank-name">' + escapeHtml(x.s.name) + '</div>' +
+      '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + pct + '%"></div></div>' +
+      '<div class="rank-detail">이번 주 정답 ' + x.w.correct + '개 · 신규 암기 ' + x.w.newMastered + '개 · ' + x.w.activeDays + '일 학습</div>' +
+      '</div>';
+  }
+  rankList.innerHTML = html;
+}
+
+function renderRoster(students) {
+  var body = document.getElementById('rosterBody');
+  if (students.length === 0) {
+    body.innerHTML = '<tr><td colspan="5" class="empty-note">학생 데이터가 없습니다.</td></tr>';
+    return;
+  }
+  var sorted = students.slice().sort(function (a, b) {
+    return (b.masteredCount || 0) - (a.masteredCount || 0);
+  });
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var s = sorted[i];
+    html += '<tr>' +
+      '<td>' + escapeHtml(s.name) + '</td>' +
+      '<td class="' + (s.status === '완료' ? 'status-done' : 'status-progress') + '">' + escapeHtml(s.status || '') + '</td>' +
+      '<td>' + escapeHtml(s.summary || '') + '</td>' +
+      '<td>' + escapeHtml(s.progressText || '') + '</td>' +
+      '<td>' + (s.lastUpdated ? new Date(s.lastUpdated).toLocaleString('ko-KR') : '') + '</td>' +
+      '</tr>';
+  }
+  body.innerHTML = html;
+}
+
+function renderWrongWords(students) {
+  var area = document.getElementById('wrongWordsArea');
+  var withWrong = students.filter(function (s) { return s.topWrong && s.topWrong.length > 0; });
+  if (withWrong.length === 0) {
+    area.innerHTML = '<div class="empty-note">아직 오답 기록이 쌓인 학생이 없어요.</div>';
+    return;
+  }
+  var html = '';
+  for (var idx = 0; idx < withWrong.length; idx++) {
+    var s = withWrong[idx];
+    var tags = '';
+    for (var j = 0; j < s.topWrong.length; j++) {
+      tags += '<span class="wrong-tag">' + escapeHtml(s.topWrong[j][0]) + ' (' + s.topWrong[j][1] + '회)</span>';
+    }
+    html += '<div class="student-card">' +
+      '<div class="student-card-head" onclick="document.getElementById(\'wt-' + idx + '\').classList.toggle(\'open\')">' +
+      '<span class="sname">' + escapeHtml(s.name) + '</span>' +
+      '<span class="sprogress">자주 틀리는 단어 ' + s.topWrong.length + '개 (클릭해서 펼치기)</span>' +
+      '</div>' +
+      '<div class="wrong-tags" id="wt-' + idx + '">' + tags + '</div>' +
+      '<button class="copy-btn" onclick="copyWrongList(' + idx + ', this)">단어 목록 복사 (개인 맞춤 프린트 요청용)</button>' +
+      '</div>';
+  }
+  area.innerHTML = html;
+  window.__wrongData = withWrong;
+}
+
+function copyWrongList(idx, btn) {
+  var s = window.__wrongData[idx];
+  var text = s.name + '의 자주 틀리는 단어: ' + s.topWrong.map(function (w) { return w[0]; }).join(', ');
+  try {
+    navigator.clipboard.writeText(text);
+    btn.textContent = '복사됨';
+    setTimeout(function () { btn.textContent = '단어 목록 복사 (개인 맞춤 프린트 요청용)'; }, 1500);
+  } catch (e) {
+    prompt('아래 내용을 복사하세요:', text);
+  }
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/* init */
+var savedUrl = getScriptUrl();
+if (savedUrl) {
+  urlInput.value = savedUrl;
+  loadData();
+} else {
+  setupBox.classList.remove('hidden');
+}
+</script>
+</body>
+</html>

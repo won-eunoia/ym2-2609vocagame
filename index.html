@@ -332,6 +332,22 @@ main {
 }
 .match-card.eng { font-style: italic; }
 
+.group-info {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--light-purple);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.group-info .gi-title { font-weight: 800; margin-bottom: 6px; color: var(--dark-purple); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .group-info .gi-title { color: #D8C6F2; }
+}
+:root[data-theme="dark"] .group-info .gi-title { color: #D8C6F2; }
+.group-info .gi-group { margin-bottom: 8px; }
+.group-info .gi-item { display: block; }
+.group-info .gi-item b { color: var(--purple); }
 .win-banner {
   text-align: center;
   padding: 14px;
@@ -437,6 +453,30 @@ footer {
   padding: 0;
 }
 
+.mastery-bar-wrap {
+  max-width: 320px;
+  margin: 10px auto 0;
+}
+.mastery-bar-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--light-purple);
+  overflow: hidden;
+}
+.mastery-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--purple), var(--gold));
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+.mastery-bar-text {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-soft);
+  text-align: center;
+}
+
 .save-indicator {
   text-align: center;
   font-size: 11px;
@@ -466,6 +506,10 @@ footer {
   <h1>VOCA-PIONEER 어휘 게임</h1>
   <p>듣기 퀴즈 &amp; 카드 맞추기 · 2023·2024·2025년 9월 모의고사 어휘</p>
   <p class="player-name-tag">👤 <span id="playerNameTag"></span> <button id="switchUserBtn">다른 이름으로</button></p>
+  <div class="mastery-bar-wrap">
+    <div class="mastery-bar-track"><div class="mastery-bar-fill" id="masteryBarFill"></div></div>
+    <div class="mastery-bar-text" id="masteryBarText">전체 어휘 진행: 0 / 703 (0%)</div>
+  </div>
 </header>
 
 <div class="tabs">
@@ -514,6 +558,11 @@ footer {
   <!-- Matching game panel -->
   <section class="panel hidden" id="matchPanel">
     <div class="match-controls">
+      <label for="matchMode">모드:</label>
+      <select id="matchMode">
+        <option value="random">랜덤 단어</option>
+        <option value="group" selected>헷갈리는 단어 묶음</option>
+      </select>
       <label for="pairCount">카드 쌍 수:</label>
       <select id="pairCount">
         <option value="6">6쌍 (12장)</option>
@@ -526,6 +575,7 @@ footer {
     <div class="match-status" id="matchStatus">시도 0회 · 남은 쌍 0개</div>
     <div class="match-grid" id="matchGrid"></div>
     <div class="win-banner hidden" id="winBanner">🎉 모두 맞췄어요! 새 게임을 눌러 다시 도전하세요.</div>
+    <div class="group-info hidden" id="groupInfo"></div>
   </section>
 </main>
 
@@ -536,25 +586,47 @@ footer {
 <script>
 const VOCAB = [["wear off", "(감정·효과·통증 등이) 점차 사라지다, 약해지다"], ["build up", "축적되다, 쌓이다"], ["novelty", "신선함, 새로움"], ["excitement", "흥분"], ["effect", "효과"], ["vitamin", "비타민"], ["caffeine", "카페인"], ["enzyme", "효소"], ["enigma", "수수께끼, 불가사의"], ["generate", "만들어내다, 생성하다"], ["degrade", "질을 떨어뜨리다, (자연적으로) 분해되다"], ["eliminate", "제거하다, 없애다"], ["remove", "제거하다, 없애다"], ["exclude", "배제하다"], ["eradicate", "근절하다"], ["maintain", "유지하다"], ["sensitive", "민감한, 예민한"], ["insensitive", "둔감한"], ["alter", "바꾸다"], ["modify", "변경하다"], ["transform", "변형시키다"], ["change", "바꾸다, 변경하다"], ["preserve", "보존하다"], ["corrupt", "부패시키다, 방해하다"], ["disrupt", "지장을 주다, 혼란에 빠뜨리다"], ["separate", "분리하다, 떼어 놓다"], ["reflection", "반영, 반사, 숙고"], ["demonstrate", "보여주다, 입증하다"], ["considerable", "상당한, 제법 많은"], ["indicate", "나타내다, 가리키다"], ["rebel", "반항하다; 반항하는 사람"], ["obey", "복종하다"], ["conform", "순응하다"], ["comply", "따르다, 준수하다"], ["turn A off from B", "A가 B에 흥미를 잃게 하다"], ["alternative", "대안, 다른 선택지"], ["alteration", "변경"], ["limitation", "제한"], ["consequence", "결과"], ["minority", "소수"], ["majority", "다수"], ["suit", "부합하다, 맞다"], ["conflict with", "~와 상충되다"], ["take full effect", "충분한 효과를 발휘하다"], ["royalty", "로열티, 사용료"], ["loyalty", "충성도"], ["defy", "반항하다, 거역하다"], ["defiant", "반항적인, 저항적인"], ["defiance", "반항, 저항"], ["defiance toward", "~에 대한 반항, 저항"], ["repetition", "반복"], ["reversal", "반전, 역전"], ["imitation", "모방"], ["collaboration", "협력, 협업"], ["conformity", "순응, 동조"], ["abstract", "추상적인"], ["concrete", "구체적인"], ["speculate", "추측하다, 투기하다"], ["anticipate", "예상하다, 기대하다"], ["cope with", "~에 대처하다, 잘 처리하다"], ["adhere to", "고수하다, ~을 지키다"], ["hinge on", "~에 달려 있다"], ["abstain from", "삼가다"], ["resort to", "~에 의지하다"], ["get rid of", "치우다, 제거하다"], ["retain", "유지하다, 보유하다"], ["removed from", "~에서 동떨어져 있다"], ["ground in", "~에 근거하다"], ["natural selection", "자연선택"], ["genetic drift", "유전적 부동"], ["be engaged in", "~에 참여하다"], ["excluded", "제외된"], ["sensory", "감각의"], ["perceptual", "지각의"], ["in accordance with", "~에 따라"], ["in proportion to", "~에 비례하여"], ["in response to", "~에 대한 반응으로"], ["in addition to", "~에 더하여"], ["thereby", "그렇게 함으로써"], ["nevertheless", "그럼에도 불구하고"], ["arise", "발생하다, 생기다"], ["object to", "반대하다"], ["adapt", "적응하다"], ["emit", "방출하다, 내보내다"], ["acoustic", "음향의"], ["scale", "규모, 눈금, 비늘"], ["bounce back", "튕겨 나오다, 회복하다"], ["frequency", "빈도, 주파수"], ["detect", "감지하다, 발견하다"], ["screen out", "선별하여 걸러내다"], ["carry out", "수행하다"], ["figure out", "알아내다, 이해하다"], ["phase out", "단계적으로 없애다"], ["sort out", "해결하다, 정리하다"], ["given", "~을 고려하면"], ["despite", "~에도 불구하고"], ["relevant", "관련 있는"], ["related", "관련된"], ["pertinent", "적절한, 관련 있는"], ["irrelevant", "관련 없는"], ["fraction", "부분, 일부"], ["stock", "축적, 저장량"], ["contradictions", "모순"], ["consistencies", "일관성"], ["accompanied", "동반된"], ["governed", "지배되는"], ["characterized", "특징지어지는"], ["constrained", "제약된"], ["commit A to memory", "A를 기억에 새기다, 암기하다"], ["commit", "저지르다, 전념하다, 맡기다"], ["prosper", "번영하다"], ["thrive", "번창하다"], ["decline", "쇠퇴하다"], ["lack", "부족하다"], ["possess", "소유하다"], ["assess", "평가하다"], ["attain", "달성하다"], ["evaluate", "평가하다"], ["appraise", "평가하다, 감정하다"], ["levy taxes", "세금을 부과하다"], ["collect revenue", "세입을 거두다"], ["exception", "예외"], ["inclusion", "포함"], ["consent", "동의"], ["irony", "역설, 아이러니"], ["awfully", "매우, 몹시"], ["substantial", "상당한"], ["medieval times", "중세시대"], ["remarkably", "현저하게"], ["city-state", "도시국가"], ["competing", "경쟁하는"], ["cooperating", "협력하는"], ["temptation", "유혹"], ["intention", "의도"], ["drive up", "(가격을) 끌어올리다"], ["bring down", "(가격을) 낮추다"], ["undermine", "약화시키다"], ["deliver", "(결과를) 가져오다, 전달하다"], ["constrain", "제약하다"], ["distort", "왜곡하다"], ["misconception", "잘못된 생각, 오해"], ["misinterpretation", "오해, 잘못된 해석"], ["misuse", "오용"], ["differentiated", "차별화된"], ["standardized", "표준화된"], ["benefit from", "~로부터 이익을 얻다"], ["suffer from", "~로부터 피해를 입다"], ["composed of", "~로 구성되다"], ["comprised of", "~로 구성되다"], ["made of", "~로 만들어지다"], ["deprived of", "~을 박탈당하다"], ["interdependent", "상호 의존적인"], ["interlocking", "서로 맞물리는"], ["aesthetically", "미적으로"], ["economically", "경제적으로"], ["functionally", "기능적으로"], ["standards", "기준"], ["benchmarks", "기준"], ["circumstances", "상황, 환경"], ["criteria", "기준(들)"], ["refined", "세련된"], ["crude", "조잡한"], ["sophisticated", "정교한"], ["elaborate", "정교한, 상세한"], ["auditory", "청각의"], ["sonic", "음향의, 소리의"], ["visual", "시각의"], ["instinctively", "본능적으로"], ["deliberately", "의도적으로"], ["consciously", "의식적으로"], ["intentionally", "의도적으로"], ["stand for", "~을 나타내다"], ["compensate for", "~을 보완하다, 벌충하다"], ["account for", "~을 설명하다, 차지하다"], ["pay as it goes", "그때그때 비용을 지불하다"], ["at hand", "가까이에, 임박한"], ["at random", "무작위로"], ["at length", "길게, 상세히"], ["on the other hand", "반면에"], ["rigid", "경직된"], ["conventional", "관습적인, 전통적인"], ["adaptive", "적응력 있는"], ["adaptable", "적응할 수 있는"], ["resistant", "저항하는, 내성이 있는"], ["inherent", "내재하는, 고유의"], ["point out", "지적하다"], ["rule out", "배제하다"], ["reflective", "반사적인, 사려 깊은"], ["receptive", "수용적인"], ["reflexive", "무의식적인, 반사적인"], ["respective", "각각의"], ["sit back", "편히 앉아있다, 수수방관하다"], ["step in", "개입하다"], ["take action", "조치를 취하다"], ["intervene", "개입하다"], ["engagement", "참여, 관여"], ["arrangement", "준비, 배열"], ["encouragement", "격려"], ["enlargement", "확대"], ["barrier", "장벽"], ["indicator", "지표"], ["driver", "원동력, 추진 요인"], ["hinder", "방해하다"], ["restrain", "억제하다"], ["drive", "이끌다, 추진하다"], ["match", "일치하다, 어울리다"], ["overlook", "간과하다"], ["contradict", "반박하다, 모순되다"], ["align with", "~와 일치하다"], ["deviate from", "~에서 벗어나다"], ["practical", "실용적인, 현실적으로 실행 가능한"], ["theoretical", "이론적인"], ["unrealistic", "비현실적인"], ["negligible", "무시해도 될 정도의"], ["ordinary", "평범한, 보통의"], ["noteworthy", "주목할 만한"], ["notable", "눈에 띄는, 주목할 만한"], ["self-focused", "자기 중심의"], ["other-focused", "타인 중심의"], ["self-centered", "자기중심적인"], ["self-interested", "자기 이익을 추구하는"], ["distress", "고통, 괴로움"], ["comfort", "편안함, 위안"], ["relief", "안도, 완화"], ["satisfaction", "만족"], ["discharge", "방출하다, 배출하다"], ["absorb", "흡수하다"], ["contain", "포함하다, 억제하다"], ["bear-bore-born", "태어나다"], ["bear-bore-borne", "부담하다, 견디다"], ["emphasize", "강조하다"], ["empathize with", "~에게 공감하다"], ["interfere with", "~을 방해하다"], ["compete with", "~와 경쟁하다"], ["sustain", "유지하다, 지속시키다"], ["abandon", "버리다, 포기하다"], ["flourish", "번창하다, 잘 자라다"], ["surrender", "항복하다, 굴복하다"], ["struggle", "애쓰다, 고군분투하다"], ["stem from", "~에서 비롯되다, 기인하다"], ["result from", "~에서 기인하다"], ["arise from", "~에서 발생하다"], ["originate from", "~에서 유래하다"], ["derive from", "~에서 파생되다"], ["result in", "~을 초래하다, 야기하다"], ["temperate", "온화한, 온대의"], ["tropical", "열대의"], ["frigid", "몹시 추운, 한대의"], ["arid", "건조한"], ["give protection against", "~으로부터 보호해 주다"], ["spread into", "~로 퍼져 들어가다"], ["spread out from", "~에서부터 퍼져 나가다"], ["whichever the case may be", "어느 경우이든"], ["whatever", "무엇이든"], ["however", "아무리 ~해도, 어떻든"], ["incapable", "~할 수 없는"], ["capable", "~할 수 있는"], ["reluctant", "꺼리는"], ["dependent", "~에 의존하는"], ["mental", "정신의"], ["physical", "물리적인, 신체의"], ["virtual", "가상의"], ["unexpected", "예상치 못한"], ["unfavorable", "좋지 않은, 불리한"], ["the last thing S wants to V", "S가 가장 V하고 싶지 않은 것"], ["first", "첫 번째의, 가장 먼저"], ["transfer", "옮기다, 이전하다"], ["assign", "할당하다, 부여하다"], ["attribute A to B", "A를 B의 탓(결과)으로 돌리다"], ["apart from", "~ 외에"], ["other than", "~ 이외에"], ["have little to do with", "~와 거의 관계가 없다"], ["have everything to do with", "~와 전적으로 관계가 있다"], ["internalize", "(문제·실패의 원인을) 자신의 탓으로 돌리다"], ["externalize", "(문제·실패의 원인을) 외부 탓으로 돌리다"], ["fair and square", "정정당당하게, 부당한 방법이 아니게"], ["deserve", "~을 받을 만하다"], ["predict", "예측하다"], ["catch up with", "~을 따라잡다"], ["come up with", "~을 생각해내다"], ["put up with", "~을 참다, 견디다"], ["compare", "비교하다"], ["attribute", "~의 탓으로 돌리다"], ["reduce", "축소하다, 줄이다"], ["subject", "~의 영향을 받는, 지배되는"], ["immune", "면역이 있는, 영향받지 않는"], ["profoundly", "근본적으로, 깊이"], ["regular", "규칙적인"], ["different", "다른"], ["disparate", "이질적인, 서로 다른"], ["diverse", "다양한"], ["reproductions", "복제품"], ["replicas", "복제품"], ["duplicates", "복제품"], ["originals", "원본"], ["spontaneous", "자발적인, 즉흥적인"], ["deliberate", "의도적인, 신중한"], ["intuitive", "직관적인"], ["analytical", "분석적인"], ["in-depth study", "심층 연구"], ["periodic cycle", "주기적 순환"], ["stretch back", "~까지 거슬러 올라가다"], ["ethnologist", "민족학자"], ["adjust", "조정하다"], ["collective prosperity", "사회 전체의 번영, 공동의 부"], ["individual hardship", "개인의 고난"], ["distribute", "분배하다"], ["figure", "생각하다, 수치, 인물"], ["share", "나누다, 공유하다"], ["pressure", "압박"], ["put A under strain", "A를 압박하다, 부담을 주다"], ["control", "통제"], ["take the place", "대신하다"], ["take place", "발생하다, 일어나다"], ["occur", "발생하다"], ["happen", "일어나다"], ["extreme", "극단적인"], ["radical", "급진적인"], ["moderate", "온건한, 적당한"], ["superficial", "피상적인"], ["technological unemployment", "기술 발전으로 인한 실업"], ["decide", "결정하다"], ["settle", "정착하다, 해결하다"], ["rely", "의존하다"], ["focus", "집중하다"], ["implicit", "암묵적인"], ["explicit", "명시적인"], ["conscious", "의식적인"], ["progress", "진전하다, 나아가다"], ["advance", "발전하다, 나아가다"], ["regress", "퇴보하다"], ["unconscious", "무의식적인"], ["subconscious", "잠재의식의"], ["purpose", "의도, 목적"], ["alert", "경계하는, 주의하는"], ["autopilot", "자동 조종 (상태)"], ["get in the way of", "~을 방해하다"], ["correspond with", "~와 일치하다, 부합하다"], ["agree with", "~에 동의하다"], ["brain dump", "머릿속 생각을 한번에 쏟아내는 것"], ["manage", "용케 해내다, 관리하다"], ["intend", "의도하다"], ["pretend", "~인 척하다"], ["minimal", "최소의"], ["processing", "가공, 처리"], ["preservation", "보존"], ["consumption", "소비"], ["nutrient", "영양소"], ["nutritional", "영양의"], ["calorie", "칼로리"], ["antioxidant", "항산화 물질"], ["carbohydrate", "탄수화물"], ["preservative", "방부제"], ["insect-resistant", "해충에 강한"], ["insect-sensitive", "해충에 민감한"], ["insect-dependent", "해충에 의존하는"], ["course", "과정"], ["absence", "부재"], ["context", "맥락"], ["opposition", "반대"], ["optimal", "최적의"], ["concentration", "농도"], ["ratio", "비율"], ["density", "밀도"], ["content", "함량, 내용"], ["damage", "손상, 손실"], ["spoilage", "부패"], ["restoration", "복원"], ["milling", "제분"], ["fiber", "섬유질"], ["artificial flavoring", "인공 향료"], ["additive", "첨가물"], ["fermentation", "발효"], ["skilled", "숙련된"], ["inexperienced", "경험이 없는, 미숙한"], ["competent", "유능한"], ["collection", "집합, 수집"], ["cluster", "무리, 군집"], ["shortage", "부족"], ["division", "분할, 구분"], ["brush up", "(지식·기술을) 다시 익히다"], ["screw up", "망치다, 실수하다"], ["mess up", "엉망으로 만들다"], ["follow up", "후속 조치를 하다"], ["know what one is doing", "자신이 하는 일을 잘 알다"], ["ignore", "무시하다"], ["question", "의문을 제기하다"], ["stand", "서다, (가능성이) 있다"], ["take", "잡다, 취하다"], ["hold", "쥐다, 보유하다"], ["finished", "끝난"], ["completed", "완료된"], ["delayed", "지연된"], ["done", "끝난, 완료된"], ["every once in a while", "가끔, 이따금"], ["at all times", "항상"], ["for the time being", "당분간"], ["imitate", "모방하다"], ["suppress", "억압하다, 억제하다"], ["embody", "구현하다"], ["calculating", "계산하는"], ["computational", "계산의, 전산의"], ["numerical", "숫자의, 수치의"], ["measure", "측정하다"], ["recognize", "인식하다"], ["calculate", "계산하다"], ["pollinating", "수분하는, 가루받이하는"], ["migrating", "이동하는, 이주하는"], ["foraging", "먹이를 찾아다니는"], ["balance A against B", "A와 B를 비교하여 균형을 맞추다"], ["view", "관점, 견해"], ["in the light of", "~에 비추어, ~을 고려하여"], ["the absence", "부재 (in the absence of: ~이 없을 때)"], ["the face", "직면 (in the face of: ~에 직면하여)"], ["the course", "과정 (in the course of: ~하는 동안)"], ["mandatory", "의무적인"], ["descriptive", "있는 그대로 기술하는"], ["prescriptive", "어떻게 해야 하는지를 규정하는, 지시하는"], ["accidental", "우연한"], ["optional", "선택적인"], ["not bother to V", "굳이 ~하지 않다"], ["viral", "바이러스의"], ["transmission", "전염, 전파"], ["contagion", "전염"], ["prevention", "예방"], ["resistance", "저항, 내성"], ["proximity", "근접, 가까움"], ["prolonged proximity", "장시간 가까이 있는 것"], ["exposure", "노출"], ["immunity", "면역"], ["presence", "존재, 있음"], ["company", "함께 있음, 동반"], ["visibly ill", "눈에 띄게 아픈"], ["slightly tired", "약간 피곤한"], ["physically active", "신체적으로 활동적인"], ["distant", "먼, 떨어진"], ["temporary", "일시적인"], ["neighboring", "인접한, 이웃의"], ["inhibit", "억제하다"], ["accelerate", "가속화하다"], ["facilitate", "촉진하다"], ["metabolize", "대사시키다"], ["reproduce", "번식하다, 재생산하다"], ["hibernate", "동면하다"], ["regenerate", "재생하다"], ["environmental conditions", "환경 조건"], ["metabolic activity", "대사 활동"], ["dramatic", "극적인, 급격한"], ["gradual", "점진적인"], ["come as a surprise to", "~에게 놀랍게 느껴지다"], ["come as a relief to", "~에게 안도감을 주다"], ["fragmented", "조각난, 단편적인"], ["artificial", "인공적인"], ["irregular", "불규칙적인"], ["an additional finding", "추가적인 발견"], ["a further surprise", "또 하나의 놀라운 사실"], ["an expected result", "예상된 결과"], ["constant", "일정한, 지속적인"], ["normal", "정상적인"], ["biological", "생물학적인"], ["metabolic", "대사의"], ["physiological", "생리학적인"], ["put on a poker face", "감정을 드러내지 않는 표정을 짓다"], ["vary with age", "연령에 따라 변하다"], ["remain constant with age", "연령에 관계없이 일정하다"], ["in the presence of", "~이 있는 상황에서"], ["in the absence of", "~이 없는 상황에서"], ["reinforce", "강화하다"], ["reverse", "뒤바꾸다, 반전시키다"], ["stabilize", "안정화시키다"], ["accidentally", "우연히"], ["spontaneously", "자발적으로, 즉흥적으로"], ["unconsciously", "무의식적으로"], ["be adapted to", "~에 맞게 조정되다"], ["underreacting", "과소 반응하는"], ["overreacting", "과잉 반응하는"], ["be judged by", "~에게 평가받다"], ["compassion", "연민, 동정심"], ["sympathy", "동정, 공감"], ["empathy", "공감"], ["indifference", "무관심"], ["hostility", "적대감"], ["interpersonal", "개인 간의"], ["relational", "관계의"], ["intergroup", "집단 간의"], ["international", "국제적인"], ["us vs. them mindset", "우리 대 그들이라는 이분법적 사고"], ["mentality", "사고방식, 심리"], ["thinking", "사고, 사고방식"], ["circumstance", "상황, 환경"], ["in search of", "~을 찾아서"], ["in need of", "~이 필요하여"], ["in pursuit of", "~을 추구하여"], ["in charge of", "~을 담당하여"], ["force A into B", "A를 B로 강요하다"], ["push", "밀다, 떠밀다"], ["trick", "속이다"], ["promote", "촉진하다, 조장하다"], ["encourage", "조장하다, 부추기다"], ["fuel", "부추기다, 촉발하다"], ["resolve", "해결하다"], ["consider", "고려하다"], ["resist", "저항하다, 꺼리다"], ["permit", "허용하다"], ["suggest", "제안하다"], ["postpone", "미루다, 연기하다"], ["paradoxically", "역설적으로"], ["predictably", "예상대로"], ["superficially", "피상적으로"], ["confine A to B", "A를 B에 국한시키다"], ["shake A out of B", "A가 B에서 벗어나게 하다"], ["derive A from B", "A를 B에서 끌어내다"], ["impose A on B", "A를 B에게 부과하다"], ["fully engaged", "완전히 몰입한"], ["largely distracted", "크게 주의가 산만한"], ["deeply detached", "깊이 무관심한"], ["mentally preoccupied", "정신적으로 사로잡힌"], ["scheduled", "예정된"], ["inevitable", "불가피한"], ["progression", "진행, 전개"], ["by chance", "우연히"], ["development", "전개"], ["resolution", "결말, 해결"], ["twist", "반전"], ["predictable", "예측 가능한"], ["ambiguous", "모호한"], ["astonishing", "놀라운"], ["fall short", "부족하다, 못 미치다"], ["hold true", "사실이다, 유효하다"], ["break down", "고장 나다, 무너지다"], ["obstacle", "장애물"], ["incentive", "유인, 동기"], ["reluctance", "꺼림, 주저함"], ["restriction", "제한"], ["stand in harmony to", "~와 조화를 이루다"], ["stand in accordance to", "~에 따르다"], ["stand in contrast to", "~와 대조를 이루다"], ["stand in compliance to", "~을 준수하다"], ["constraints", "제약"], ["capacities", "능력, 용량"], ["expenditures", "지출"], ["minimal losses", "최소한의 손실"], ["optimal gains", "최적의 이익"], ["unintended costs", "의도치 않은 비용"], ["temporary setbacks", "일시적인 차질"], ["compliance", "준수, 따름"], ["denial", "부정, 부인"], ["reliance", "의존"], ["dismiss", "무시하다, 묵살하다, 일축하다"], ["sticky prices", "경직적인 가격"], ["market mechanism", "시장 원리, 시장 메커니즘"], ["instantaneously", "즉각적으로"], ["brutal", "가혹한, 냉혹한"], ["on the spot", "즉석에서, 그 자리에서"], ["occasionally", "가끔"], ["reluctantly", "마지못해"], ["constantly", "끊임없이"], ["arbitrarily", "임의로"], ["debtor", "채무자"], ["creditor", "채권자"], ["beneficiary", "수혜자"], ["guarantor", "보증인"], ["tolerance", "내성"], ["dependency", "의존(성)"], ["interaction", "상호작용"], ["tear down", "허물다"], ["blow up", "폭파하다"], ["put aside", "제쳐두다, 미루다"], ["bring about", "초래하다, 야기하다"], ["bring A to justice", "A를 법의 심판대에 세우다"], ["put A to death", "A를 처형하다"], ["take A into custody", "A를 구금하다"], ["sentence A to imprisonment", "A에게 징역형을 선고하다"], ["interpretation", "해석"], ["connotation", "함축적 의미, 뉘앙스"], ["evaluation", "평가"], ["perception", "인식"], ["keep up with", "뒤처지지 않다, 따라가다"], ["do away with", "없애다, 폐지하다"], ["distortion", "왜곡"], ["anchoring", "(의미를 특정 방향으로) 고정시키기"], ["displacement", "치환, 이동"], ["detachment", "분리, 무심함"], ["anchor", "닻; 단단히 고정하다"], ["otherwise ambiguous", "그렇지 않으면 애매한"], ["embellish", "꾸미다, 윤색하다"], ["confine", "제한하다"], ["expand", "확장하다"], ["provoke", "유발하다, 화나게 하다"], ["elicit", "이끌어내다"], ["obscure", "흐리게 하다, 모호하게 하다"], ["exclusion", "배제"], ["identification", "식별, 확인"], ["reinforcement", "강화"], ["concealment", "은폐"], ["identify", "식별하다, 확인하다, 알아보다"], ["divert", "방향을 바꾸다, 전환시키다"], ["point", "가리키다"], ["detach", "분리하다"], ["constraint", "제약"], ["breadth", "폭, 너비"], ["specificity", "구체성"], ["media coverage", "언론 보도"], ["in advance", "미리"], ["remote-control", "원격 조종하다"], ["intended meaning", "의도된 의미"], ["implied", "함축적인"], ["literal", "문자 그대로의"], ["mass", "질량, 덩어리, 다수"], ["volume", "부피"], ["amount", "양"], ["quantity", "수량"], ["virtual space", "가상 공간"], ["space-time", "시공간"], ["a mass of", "다량의 ~"], ["massive", "거대한"], ["rotational", "회전의"], ["gravitational", "중력의"], ["vibrational", "진동의"], ["radiational", "방사의"], ["solar eclipse", "일식"], ["lunar eclipse", "월식"], ["gravity", "중력"], ["gravitation", "중력, 만유인력"], ["gravitational pull", "중력"], ["universal gravitation", "만유인력의 법칙"], ["axis", "축"], ["orbit", "궤도"], ["latitude", "위도"], ["hemisphere", "반구"], ["rotation", "자전, 회전"], ["appear to have p.p.", "~했던 것처럼 보이다"], ["shift", "이동, 변화"], ["pass by", "지나가다"], ["consistent", "일관된"], ["observe", "관측하다, 준수하다"], ["inclined", "~하는 경향이 있는"], ["compelled", "~하도록 강요받는"], ["wired", "(본능적으로) ~하도록 연결된"], ["conditioned", "~하도록 길들여진"], ["wire", "전선; be wired: 전선이 연결되다"], ["hierarchy", "위계, 계층구조"], ["spectrum", "스펙트럼, 범위"], ["classification", "분류"], ["regress to", "~로 퇴행하다"], ["acquired", "습득된, 후천적인"], ["intrinsic", "본질적인"], ["incidental", "부수적인"], ["external", "외부의"], ["intrude on", "침해하다, 침범하다"], ["infringe on", "침해하다"], ["encroach on", "잠식하다, 침해하다"], ["inflict on", "(고통 등을) 가하다"], ["cut someone out", "(운전 중) 끼어들다"], ["cut someone down", "깎아내리다, 말을 끊다"], ["cut someone off", "차단하다, 가로막다"], ["road rage", "운전 중 분노"], ["frustrated", "좌절한, 낙담한"], ["make sense of", "이해하다, 파악하다"], ["imply", "암시하다"], ["status", "지위, 신분"], ["kick in", "작용하기 시작하다"], ["slide across", "가로질러 미끄러지다"], ["slide against", "~에 맞대어 미끄러지다"], ["slide beneath", "아래로 미끄러지다"], ["slide beyond", "~를 지나 미끄러지다"], ["in reserve", "예비로"], ["in check", "억제된, 통제된"], ["in place", "제자리에"], ["in position", "제 위치에"], ["concern oneself with", "~에 관심을 가지다"], ["engage oneself in", "~에 몰두하다"], ["occupy oneself with", "~에 몰두하다, 전념하다"], ["distance oneself from", "~로부터 거리를 두다"], ["come loose", "느슨해지다, 헐거워지다"], ["stay intact", "온전하게 유지되다"], ["remain fixed", "고정된 채로 있다"], ["hold firm", "단단히 고정되다"], ["across its length", "길이를 가로질러"], ["along its length", "길이를 따라"], ["beyond its length", "길이를 넘어서"], ["beneath its length", "길이 아래로"], ["contracts", "수축하다"], ["stretches", "늘어나다"], ["hardens", "굳다, 단단해지다"], ["shrinks", "줄어들다"], ["bends", "구부러지다"], ["splits", "갈라지다"], ["twists", "꼬이다, 비틀리다"], ["remains", "남다"], ["friction force", "마찰력"], ["gravitational force", "중력"], ["tension force", "장력"], ["magnetic force", "자기력"], ["hold back", "저지하다, 억제하다"], ["pull apart", "잡아당겨 떼어내다"], ["set aside", "따로 떼어두다"], ["friction", "마찰(력)"], ["hammer in", "망치로 박아 넣다"], ["rip apart", "마구 찢다, 잡아 뜯다"], ["grip", "꽉 잡다"], ["former", "(앞서 언급된) 전자"], ["wood fiber", "나무 섬유(질)"]];
 
+// 원문 [ ] 안에 함께 묶여 있던 '헷갈리기 쉬운 단어' 묶음 (VOCAB의 영단어 기준)
+const GROUPS = [["temperate", "tropical", "frigid", "arid"], ["spread into", "spread out from"], ["whichever the case may be", "whatever", "however"], ["incapable", "capable", "reluctant", "dependent"], ["mental", "physical", "abstract", "virtual"], ["unexpected", "unfavorable"], ["the last thing S wants to V", "first"], ["transfer", "assign", "attribute"], ["apart from", "other than"], ["internalize", "externalize"], ["deserve", "predict", "evaluate"], ["catch up with", "come up with", "put up with"], ["compare", "attribute", "reduce"], ["resistant", "subject", "immune"], ["different", "disparate", "diverse"], ["reproductions", "replicas", "duplicates", "originals"], ["spontaneous", "deliberate", "intuitive", "analytical"], ["collective prosperity", "individual hardship"], ["distribute", "figure", "share"], ["pressure", "put A under strain", "control"], ["take the place", "take place", "occur", "happen"], ["extreme", "radical", "moderate", "superficial"], ["decide", "settle", "focus"], ["implicit", "explicit"], ["progress", "advance", "regress"], ["conscious", "unconscious", "subconscious"], ["purpose", "alert", "autopilot"], ["interfere with", "get in the way of", "correspond with", "agree with"], ["manage", "intend", "pretend", "decline"], ["processing", "preservation", "consumption"], ["nutrient", "nutritional", "calorie"], ["antioxidant", "carbohydrate", "preservative"], ["insect-resistant", "insect-sensitive", "insect-dependent"], ["course", "absence", "context", "opposition"], ["concentration", "ratio", "density", "content"], ["damage", "spoilage", "preservation", "restoration"], ["capable", "skilled", "inexperienced", "competent"], ["collection", "cluster", "shortage", "division"], ["brush up", "screw up", "mess up", "follow up"], ["know what one is doing", "ignore", "question"], ["stand", "take", "hold"], ["finished", "completed", "delayed", "done"], ["imitate", "suppress", "contradict", "embody"], ["calculating", "computational", "numerical"], ["measure", "recognize", "calculate", "assign"], ["pollinating", "migrating", "foraging"], ["view", "in the light of", "the absence", "the face", "the course"], ["mandatory", "descriptive", "prescriptive", "accidental", "optional"], ["transmission", "contagion", "prevention", "resistance"], ["proximity", "exposure", "resistance", "immunity"], ["presence", "company", "absence", "control"], ["visibly ill", "slightly tired", "physically active"], ["distant", "temporary", "neighboring"], ["suppress", "inhibit", "accelerate", "restrain", "facilitate"], ["metabolize", "reproduce", "hibernate", "regenerate"], ["dramatic", "gradual", "moderate"], ["come as a surprise to", "come as a relief to"], ["conventional", "fragmented", "artificial", "irregular"], ["an additional finding", "a further surprise", "an expected result"], ["constant", "normal", "extreme"], ["biological", "metabolic", "physiological"], ["vary with age", "remain constant with age"], ["in the presence of", "in the absence of"], ["reinforce", "preserve", "reverse", "stabilize"], ["accidentally", "spontaneously", "unconsciously", "deliberately"], ["underreacting", "overreacting"], ["wear off", "build up"], ["vitamin", "caffeine"], ["enzyme", "enigma"], ["generate", "degrade"], ["eliminate", "remove", "exclude", "eradicate", "maintain"], ["sensitive", "insensitive"], ["alter", "modify", "transform", "change", "preserve"], ["corrupt", "disrupt"], ["rebel", "obey", "conform", "comply"], ["alternative", "alteration", "limitation", "consequence"], ["suit", "conflict with"], ["royalty", "loyalty"], ["abstract", "concrete"], ["speculate", "anticipate"], ["cope with", "adhere to", "hinge on", "abstain from", "resort to"], ["natural selection", "genetic drift"], ["be engaged in", "excluded"], ["sensory", "perceptual"], ["in accordance with", "in proportion to", "in response to", "in addition to"], ["thereby", "nevertheless"], ["object to", "adhere to", "adapt", "resort to"], ["screen out", "carry out", "figure out", "phase out", "sort out"], ["relevant", "related", "pertinent", "irrelevant"], ["fraction", "stock"], ["contradictions", "consistencies"], ["accompanied", "governed", "characterized", "constrained"], ["prosper", "thrive", "decline"], ["lack", "possess", "demonstrate"], ["assess", "attain", "evaluate", "appraise"], ["levy taxes", "collect revenue"], ["exception", "inclusion", "consent"], ["competing", "cooperating"], ["temptation", "intention"], ["drive up", "bring down"], ["anticipate", "undermine", "deliver", "constrain", "distort"], ["misconception", "misinterpretation", "misuse"], ["differentiated", "standardized"], ["benefit from", "suffer from"], ["composed of", "comprised of", "made of", "deprived of"], ["interdependent", "interlocking"], ["aesthetically", "economically", "functionally"], ["standards", "benchmarks", "circumstances", "criteria"], ["refined", "crude", "sophisticated", "elaborate"], ["acoustic", "auditory", "sonic", "visual"], ["instinctively", "deliberately", "consciously", "intentionally"], ["stand for", "compensate for", "account for"], ["at hand", "at random", "at length"], ["rigid", "conventional", "adaptive", "adaptable", "resistant", "inherent"], ["figure out", "point out", "carry out", "rule out"], ["reflective", "receptive", "reflexive", "respective"], ["sit back", "step in", "take action", "intervene"], ["engagement", "arrangement", "encouragement", "enlargement"], ["barrier", "consequence", "indicator", "driver"], ["hinder", "restrain", "undermine", "drive"], ["match", "distort", "overlook", "contradict"], ["self-focused", "other-focused", "self-centered", "self-interested"], ["distress", "comfort", "relief", "satisfaction"], ["retain", "discharge", "absorb", "contain"], ["emphasize", "empathize with", "interfere with", "compete with"], ["sustain", "disrupt", "undermine", "abandon"], ["flourish", "surrender", "struggle", "thrive"], ["result from", "arise from", "originate from", "derive from"], ["compassion", "sympathy", "empathy", "indifference", "hostility"], ["interpersonal", "relational", "intergroup", "international"], ["us vs. them mindset", "mentality", "thinking", "circumstance"], ["in search of", "in need of", "in pursuit of", "in charge of"], ["force A into B", "drive", "push", "pressure", "trick"], ["promote", "encourage", "fuel", "resolve", "suppress"], ["consider", "resist", "permit", "suggest", "postpone"], ["paradoxically", "predictably", "superficially", "deliberately"], ["confine A to B", "shake A out of B", "derive A from B", "impose A on B"], ["fully engaged", "largely distracted", "deeply detached", "mentally preoccupied"], ["scheduled", "inevitable", "deliberate", "progression"], ["development", "resolution", "twist", "progression"], ["predictable", "ambiguous", "astonishing", "conventional"], ["fall short", "hold true", "wear off", "break down"], ["obstacle", "incentive", "reluctance", "restriction"], ["stand in harmony to", "stand in accordance to", "stand in contrast to", "stand in compliance to"], ["constraints", "capacities", "incentive", "expenditures"], ["minimal losses", "optimal gains", "unintended costs", "temporary setbacks"], ["compliance", "denial", "reliance", "consent"], ["occasionally", "reluctantly", "constantly", "arbitrarily"], ["debtor", "creditor", "beneficiary", "guarantor"], ["tolerance", "dependency", "resistance", "interaction"], ["tear down", "blow up", "put aside", "bring about"], ["bring A to justice", "put A to death", "take A into custody", "sentence A to imprisonment"], ["interpretation", "connotation", "evaluation", "perception"], ["come up with", "keep up with", "put up with", "do away with"], ["distortion", "anchoring", "displacement", "detachment"], ["distort", "embellish", "reinforce", "confine", "expand"], ["suppress", "provoke", "elicit", "constrain", "obscure"], ["exclusion", "identification", "reinforcement", "displacement", "concealment"], ["obscure", "divert", "point", "detach", "restrain"], ["constraint", "breadth", "specificity"], ["mass", "volume", "amount", "quantity"], ["rotational", "gravitational", "vibrational", "radiational"], ["gravity", "gravitation"], ["axis", "orbit", "latitude", "hemisphere", "rotation"], ["inclined", "compelled", "wired", "conditioned"], ["hierarchy", "spectrum", "classification"], ["regress to", "progress", "conform", "resort to"], ["inherent", "acquired", "intrinsic", "incidental", "external"], ["intrude on", "infringe on", "encroach on", "inflict on"], ["cut someone out", "cut someone down", "cut someone off"], ["slide across", "slide against", "slide beneath", "slide beyond"], ["in reserve", "in check", "in place", "in position"], ["concern oneself with", "engage oneself in", "occupy oneself with", "distance oneself from"], ["come loose", "stay intact", "remain fixed", "hold firm"], ["across its length", "along its length", "beyond its length", "beneath its length"], ["contracts", "stretches", "hardens", "shrinks"], ["bends", "splits", "twists", "remains"], ["friction force", "gravitational force", "tension force", "magnetic force"], ["put aside", "hold back", "pull apart", "set aside"]];
+const VOCAB_MAP = {};
+VOCAB.forEach(v => { VOCAB_MAP[v[0]] = v[1]; });
+
 /* ===================== 진행상황 저장(구글 시트) 연동 ===================== */
 // 아래 URL을 Apps Script 배포 후 받은 "웹 앱 URL"로 바꿔주세요.
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz3Uaq5TtcafP4LeDucwwWrn5E4EwneJ1U4Nx9YQgm39YCg-Eq08lAxmVWjCB-87z04/exec";
 
 let playerName = '';
 let saveTimer = null;
+let masteredWords = new Set(); // English words the student has ever answered correctly
+let wrongCounts = {}; // { englishWord: totalTimesWrong } accumulated across all sessions
 
 function saveIndicatorEl() {
   return document.getElementById('saveIndicator');
+}
+
+function updateMasteryDisplay() {
+  const fill = document.getElementById('masteryBarFill');
+  const text = document.getElementById('masteryBarText');
+  const total = VOCAB.length;
+  const done = masteredWords.size;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  if (fill) fill.style.width = pct + '%';
+  if (text) text.textContent = `전체 어휘 진행: ${done} / ${total} (${pct}%)`;
 }
 
 function apiSave(state) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('http') !== 0) return;
   const el = saveIndicatorEl();
   if (el) el.textContent = '저장 중...';
+  const payload = Object.assign({
+    name: playerName,
+    masteredWords: Array.from(masteredWords),
+    wrongCounts: wrongCounts
+  }, state);
   fetch(APPS_SCRIPT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(Object.assign({ name: playerName }, state))
+    body: JSON.stringify(payload)
   }).then(() => {
     if (el) el.textContent = '저장됨 ✓';
     clearTimeout(saveTimer);
@@ -589,6 +661,9 @@ function enterApp(name, loaded) {
   playerNameTag.textContent = name;
   nameGate.classList.add('hidden');
   appRoot.classList.remove('hidden');
+  masteredWords = new Set((loaded && loaded.found && loaded.masteredWords) ? loaded.masteredWords : []);
+  wrongCounts = (loaded && loaded.found && loaded.wrongCounts) ? loaded.wrongCounts : {};
+  updateMasteryDisplay();
   resumedState = (loaded && loaded.found && loaded.status !== '완료') ? loaded : null;
   initGameForPlayer();
 }
@@ -599,6 +674,14 @@ nameSubmitBtn.addEventListener('click', () => {
     nameGateStatus.textContent = '이름을 입력해주세요.';
     return;
   }
+  // iOS Safari 등은 '사용자가 직접 누른 순간'에만 음성 재생을 허용하므로,
+  // 데이터를 불러오는 비동기 작업을 시작하기 전에 여기서 먼저 음성 엔진을 한 번 깨워둔다.
+  try {
+    const unlock = new SpeechSynthesisUtterance(' ');
+    unlock.volume = 0.01;
+    window.speechSynthesis.speak(unlock);
+  } catch (e) { /* TTS unavailable */ }
+
   nameGateStatus.textContent = '이전 진행 상황을 확인하는 중...';
   nameSubmitBtn.disabled = true;
   apiLoad(name).then(loaded => {
@@ -621,18 +704,26 @@ switchUserBtn.addEventListener('click', () => {
   nameGateStatus.textContent = '';
 });
 
+try {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+} catch (e) { /* TTS unavailable */ }
+
 function speak(text, lang) {
   try {
-    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-      window.speechSynthesis.cancel();
-    }
-    // small delay after cancel() avoids the browser clipping the first syllable
-    setTimeout(() => {
+    const doSpeak = () => {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang;
       u.rate = lang === 'ko-KR' ? 0.8 : 0.9;
       window.speechSynthesis.speak(u);
-    }, 120);
+    };
+    if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+      window.speechSynthesis.cancel();
+      // small delay after cancel() avoids the browser clipping the first syllable
+      setTimeout(doSpeak, 120);
+    } else {
+      doSpeak();
+    }
   } catch (e) { /* TTS unavailable */ }
 }
 
@@ -696,6 +787,8 @@ let roundNumber = 1;
 let roundPool = [];
 let roundIndex = 0;
 let roundWrong = [];
+let attemptCounts = {}; // per-round retry counter, keyed by English word (reset each round)
+const MAX_ATTEMPTS_PER_ROUND = 2; // a missed word gets requeued once, then counts as wrong for the round
 
 const dirEngBtn = document.getElementById('dirEngBtn');
 const dirKorBtn = document.getElementById('dirKorBtn');
@@ -735,7 +828,16 @@ function pickDistractors(correct, n) {
 
 function startSession() {
   roundNumber = 1;
-  roundPool = shuffle(VOCAB).slice(0, FIRST_ROUND_SIZE);
+  const unmastered = VOCAB.filter(v => !masteredWords.has(v[0]));
+  if (unmastered.length === 0) {
+    // everything mastered at least once -> full review mode
+    roundTransition.textContent = '🎉 전체 703단어를 모두 한 번씩 맞혀봤어요! 복습 모드로 계속합니다.';
+    roundTransition.classList.remove('hidden');
+    setTimeout(() => roundTransition.classList.add('hidden'), 2200);
+    roundPool = shuffle(VOCAB).slice(0, FIRST_ROUND_SIZE);
+  } else {
+    roundPool = shuffle(unmastered).slice(0, FIRST_ROUND_SIZE);
+  }
   beginRound();
 }
 
@@ -751,6 +853,7 @@ function resumeRound(state) {
   roundIndex = state.roundIndex || 0;
   score = state.score || 0;
   roundWrong = state.roundWrong || [];
+  attemptCounts = {};
   quizResult.classList.add('hidden');
   quizQuestionArea.classList.remove('hidden');
   quizScoreEl.textContent = score;
@@ -775,6 +878,7 @@ function beginRound() {
   roundIndex = 0;
   score = 0;
   roundWrong = [];
+  attemptCounts = {};
   quizResult.classList.add('hidden');
   quizQuestionArea.classList.remove('hidden');
   quizScoreEl.textContent = 0;
@@ -792,6 +896,8 @@ function nextQuestion() {
   answered = false;
   roundIndex++;
   quizIndexEl.textContent = roundIndex;
+  quizTotalEl.textContent = roundPool.length;
+  roundSizeLabel.textContent = roundPool.length;
 
   currentItem = roundPool[roundIndex - 1];
   const distractors = pickDistractors(currentItem, 3);
@@ -828,9 +934,24 @@ function selectChoice(btn, choice) {
   if (isCorrect) {
     btn.classList.add('correct');
     score++;
+    masteredWords.add(currentItem[0]);
+    updateMasteryDisplay();
   } else {
     btn.classList.add('wrong');
-    roundWrong.push(currentItem);
+    const word = currentItem[0];
+    wrongCounts[word] = (wrongCounts[word] || 0) + 1; // cumulative, across all sessions
+    attemptCounts[word] = (attemptCounts[word] || 0) + 1; // this round only
+
+    if (attemptCounts[word] < MAX_ATTEMPTS_PER_ROUND) {
+      // requeue soon (3~5 questions later) so the word gets another shot right away
+      const gap = 3 + Math.floor(Math.random() * 3);
+      const insertAt = Math.min(roundIndex + gap, roundPool.length);
+      roundPool.splice(insertAt, 0, currentItem);
+    } else {
+      // already retried once and missed again -> counts as wrong for this round
+      roundWrong.push(currentItem);
+    }
+
     // reveal correct
     [...choicesBox.children].forEach((c, i) => {
       if (currentChoices[i][0] === currentItem[0]) c.classList.add('correct');
@@ -847,7 +968,8 @@ function selectChoice(btn, choice) {
     roundIndex: roundIndex,
     roundPool: roundPool,
     score: score,
-    roundWrong: roundWrong
+    roundWrong: roundWrong,
+    lastAnswerCorrect: isCorrect
   });
 }
 
@@ -913,27 +1035,78 @@ let attempts = 0;
 let lockBoard = false;
 
 const pairCountSel = document.getElementById('pairCount');
+const matchModeSel = document.getElementById('matchMode');
 const newGameBtn = document.getElementById('newGameBtn');
 const matchGrid = document.getElementById('matchGrid');
 const matchStatus = document.getElementById('matchStatus');
 const winBanner = document.getElementById('winBanner');
+const groupInfo = document.getElementById('groupInfo');
+let currentGroups = [];
 
 newGameBtn.addEventListener('click', startMatchGame);
+matchModeSel.addEventListener('change', startMatchGame);
+pairCountSel.addEventListener('change', startMatchGame);
+
+// 묶음 모드: 같은 묶음의 단어들을 통째로 넣어서, 뜻이 비슷한 카드끼리 섞이게 한다.
+function pickGroupItems(target) {
+  const pool = shuffle(GROUPS);
+  const chosenGroups = [];
+  let count = 0;
+  for (const g of pool) {
+    if (count >= target) break;
+    if (count + g.length <= target) {
+      chosenGroups.push(g);
+      count += g.length;
+    }
+  }
+  // 아직 자리가 남으면 가장 작은 묶음으로 채워본다
+  if (count < target) {
+    for (const g of pool) {
+      if (chosenGroups.indexOf(g) !== -1) continue;
+      if (count + g.length <= target) { chosenGroups.push(g); count += g.length; }
+      if (count >= target) break;
+    }
+  }
+  currentGroups = chosenGroups;
+  const items = [];
+  const seen = new Set();
+  chosenGroups.forEach(g => g.forEach(w => {
+    if (!seen.has(w) && VOCAB_MAP[w] !== undefined) {
+      seen.add(w);
+      items.push([w, VOCAB_MAP[w]]);
+    }
+  }));
+  return items;
+}
 
 function startMatchGame() {
   matchInitialized = true;
   winBanner.classList.add('hidden');
+  groupInfo.classList.add('hidden');
   selectedCards = [];
   matchedCount = 0;
   attempts = 0;
   lockBoard = false;
-  totalPairs = parseInt(pairCountSel.value, 10);
+  const target = parseInt(pairCountSel.value, 10);
+  const mode = matchModeSel.value;
 
-  const chosen = shuffle(VOCAB).slice(0, totalPairs);
+  let chosen;
+  if (mode === 'group') {
+    chosen = pickGroupItems(target);
+  } else {
+    currentGroups = [];
+    chosen = shuffle(VOCAB).slice(0, target);
+  }
+  totalPairs = chosen.length;
+
+  // 묶음 모드에서는 뜻 전체를 보여줘서 비슷한 단어끼리도 구분되게 한다.
+  // 같은 뜻이 적힌 카드는 서로 같은 짝으로 인정한다(meaningKey).
   const cards = [];
   chosen.forEach((item, i) => {
-    cards.push({ id: i, type: 'eng', text: item[0], pairId: i });
-    cards.push({ id: i + 1000, type: 'kor', text: cleanKoreanText(item[1]), pairId: i });
+    const korText = mode === 'group' ? item[1].replace(/^\([^)]*\)\s*/, '') : cleanKoreanText(item[1]);
+    const key = korText;
+    cards.push({ type: 'eng', text: item[0], pairId: i, meaningKey: key });
+    cards.push({ type: 'kor', text: korText, pairId: i, meaningKey: key });
   });
   const shuffled = shuffle(cards);
 
@@ -955,13 +1128,30 @@ function updateMatchStatus() {
   matchStatus.textContent = `시도 ${attempts}회 · 남은 쌍 ${totalPairs - matchedCount}개`;
 }
 
+function showGroupInfo() {
+  if (!currentGroups.length) return;
+  let h = '<div class="gi-title">이번 판의 헷갈리는 단어 묶음 — 차이를 기억해두세요</div>';
+  currentGroups.forEach(g => {
+    h += '<div class="gi-group">';
+    g.forEach(w => {
+      if (VOCAB_MAP[w] === undefined) return;
+      const safeW = w.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      const safeM = VOCAB_MAP[w].replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      h += '<span class="gi-item"><b>' + safeW + '</b> — ' + safeM + '</span>';
+    });
+    h += '</div>';
+  });
+  groupInfo.innerHTML = h;
+  groupInfo.classList.remove('hidden');
+}
+
 function onCardClick(div, card) {
   if (lockBoard) return;
   if (div.classList.contains('matched') || div.classList.contains('selected')) return;
   if (selectedCards.length >= 2) return;
 
   div.classList.add('selected');
-  const spokenText = card.type === 'eng' ? card.text : card.text.replace(/~/g, '뭐뭐');
+  const spokenText = card.type === 'eng' ? card.text : cleanKoreanText(card.text).replace(/~/g, '뭐뭐');
   speak(spokenText, card.type === 'eng' ? 'en-US' : 'ko-KR');
   selectedCards.push({ div, card });
 
@@ -969,7 +1159,15 @@ function onCardClick(div, card) {
     attempts++;
     updateMatchStatus();
     const [a, b] = selectedCards;
-    if (a.card.pairId === b.card.pairId && a.card.type !== b.card.type) {
+    const isMatch = a.card.type !== b.card.type &&
+      (a.card.pairId === b.card.pairId || a.card.meaningKey === b.card.meaningKey);
+
+    // 단어 카드 1장 + 뜻 카드 1장으로 짝을 시도한 경우에만, 그 단어를 진행률/오답 기록에 반영한다
+    // (단어-단어, 뜻-뜻 조합은 실제 뜻을 아는지 테스트한 게 아니므로 반영하지 않음)
+    const engCard = a.card.type === 'eng' ? a.card : (b.card.type === 'eng' ? b.card : null);
+    const testedWord = (a.card.type !== b.card.type && engCard) ? engCard.text : null;
+
+    if (isMatch) {
       a.div.classList.add('matched');
       b.div.classList.add('matched');
       a.div.classList.remove('selected');
@@ -977,10 +1175,20 @@ function onCardClick(div, card) {
       matchedCount++;
       selectedCards = [];
       updateMatchStatus();
+      if (testedWord) {
+        masteredWords.add(testedWord);
+        updateMasteryDisplay();
+        apiSave({ status: 'in_progress', direction: quizDirection, roundNumber: roundNumber, roundIndex: roundIndex, roundPool: roundPool, score: score, roundWrong: roundWrong });
+      }
       if (matchedCount === totalPairs) {
         winBanner.classList.remove('hidden');
+        showGroupInfo();
       }
     } else {
+      if (testedWord) {
+        wrongCounts[testedWord] = (wrongCounts[testedWord] || 0) + 1;
+        apiSave({ status: 'in_progress', direction: quizDirection, roundNumber: roundNumber, roundIndex: roundIndex, roundPool: roundPool, score: score, roundWrong: roundWrong });
+      }
       lockBoard = true;
       setTimeout(() => {
         a.div.classList.remove('selected');
